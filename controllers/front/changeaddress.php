@@ -144,7 +144,21 @@ class KlarnaOfficialChangeAddressModuleFrontController extends ModuleFrontContro
 
             $this->context->cart = $cart;
             $this->context->country = $country_on_cart;
-            $this->context->currency = new Currency((int)$cart->id_currency);
+            $id_currency = (int) ($country_on_cart->id_currency ? $country_on_cart->id_currency : $cart->id_currency);
+            $tmp_currency = new Currency($id_currency);
+            if (!isset($this->context->currency)) {
+                $this->context->currency = $tmp_currency;
+                global $currency; // Compatibility 1.4
+                $currency = $tmp_currency;
+            } else {
+                foreach (get_object_vars($tmp_currency) as $key => $value) {
+                    $this->context->currency->$key = $value;
+                }
+            }
+            $this->context->cart->id_currency = (int)$this->context->currency->id;
+            Tools::setCurrency($this->context->cookie);
+            $klarnadata->purchase_country=$this->context->country->iso_code;
+            $klarnadata->purchase_currency=strtolower($this->context->currency->iso_code);
             $cart->update();
             $cart->getPackageList(true);
         }
