@@ -88,7 +88,16 @@ class FrontController extends FrontControllerCore
             );
         }
 
-		if (Configuration::get('PS_GEOLOCATION_ENABLED')) {
+		if ((int) $this->context->cookie->id_cart) {
+            if (!isset($cart)) {
+                $cart = new Cart($this->context->cookie->id_cart);
+            }
+			$carrieraddress = new Address($cart->id_address_delivery);
+            $country_on_cart = new Country($carrieraddress->id_country);
+			$this->context->country = $country_on_cart;
+			$this->context->cookie->iso_code_country = strtoupper($country_on_cart->iso_code);
+            $this->context->cookie->id_currency = Currency::getCurrencyInstance($country_on_cart->id_currency ? (int) $country_on_cart->id_currency : $cart->id_currency)->id;
+		} elseif (Configuration::get('PS_GEOLOCATION_ENABLED')) {
             if (($new_default = $this->geolocationManagement($this->context->country)) && Validate::isLoadedObject($new_default)) {
                 $this->context->country = $new_default;
             }
