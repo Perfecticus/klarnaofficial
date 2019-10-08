@@ -4070,16 +4070,23 @@ class KlarnaOfficial extends PaymentModule
         
         if (Configuration::get('KCOV3')) {
             $language_code = $this->context->language->language_code;
-            $id_shop_country = (int)Configuration::get('PS_SHOP_COUNTRY_ID');
-            if ($id_shop_country == 0) {
-                $id_shop_country = (int)Configuration::get('PS_COUNTRY_DEFAULT');
+            $id_country = 0;
+            if($this->context->cart->id_address_delivery) {
+                $carrieraddress = new Address($this->context->cart->id_address_delivery);
+                $id_country = (int)$carrieraddress->id_country;
+            }
+            if ($id_country == 0) {
+                $id_country = (int)Configuration::get('PS_SHOP_COUNTRY_ID');
+            }
+            if ($id_country == 0) {
+                $id_country = (int)Configuration::get('PS_COUNTRY_DEFAULT');
             }
             
-            $shop_country = new Country($id_shop_country);
+            $country = new Country($id_country);
             return array(
                 'locale' => $language_code,
                 'purchase_currency' => $currency_iso_code,
-                'purchase_country' => $shop_country->iso_code
+                'purchase_country' => $country->iso_code
             );
         }
         
