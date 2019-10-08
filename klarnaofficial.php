@@ -4074,6 +4074,8 @@ class KlarnaOfficial extends PaymentModule
             if($this->context->cart->id_address_delivery) {
                 $carrieraddress = new Address($this->context->cart->id_address_delivery);
                 $id_country = (int)$carrieraddress->id_country;
+            } elseif (isset($this->context->country)) {
+                $id_country = $this->context->country->id;
             }
             if ($id_country == 0) {
                 $id_country = (int)Configuration::get('PS_SHOP_COUNTRY_ID');
@@ -4081,7 +4083,7 @@ class KlarnaOfficial extends PaymentModule
             if ($id_country == 0) {
                 $id_country = (int)Configuration::get('PS_COUNTRY_DEFAULT');
             }
-            
+
             $country = new Country($id_country);
             return array(
                 'locale' => $language_code,
