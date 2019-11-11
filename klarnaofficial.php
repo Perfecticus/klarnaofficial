@@ -75,6 +75,18 @@ class KlarnaOfficial extends PaymentModule
         'KCOV3_MID',
         'KCOV3_SECRET',
         'KCOV3_FOOTERBANNER',
+        'KCOV3_CUSTOM_CHECKBOX',
+        'KCOV3_CUSTOM_CHECKBOX_REQUIRED',
+        'KCOV3_CUSTOM_CHECKBOX_PRECHECKED',
+        'KCOV3_CUSTOM_CHECKBOX_TEXT',
+        
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_ACTIVE',
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_FEE',
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_IMGURL',
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_COUNTRIES',
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_LABEL',
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_DESC',
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION',
        
         'KCO_DOBMAN',
         'KCO_CALLBACK_CHECK',
@@ -155,7 +167,7 @@ class KlarnaOfficial extends PaymentModule
     {
         $this->name = 'klarnaofficial';
         $this->tab = 'payments_gateways';
-        $this->version = '2.1.11';
+        $this->version = '2.1.16';
         $this->author = 'Prestaworks AB';
         $this->module_key = 'b803c9b20c1ec71722eab517259b8ddf';
         $this->need_instance = 1;
@@ -303,9 +315,37 @@ class KlarnaOfficial extends PaymentModule
             Tools::isSubmit('btnKCOSubmit')
         ) {
             foreach ($this->configuration_params as $param) {
+                if ("KCOV3_CUSTOM_CHECKBOX_TEXT" == $param) {
+                    $texts = array();
+                    $has_custom_text = false;
+                    foreach (Language::getLanguages(false, false, true) as $id_lang) {
+                        if (Tools::getIsset($param.'_'.$id_lang)) {
+                            $has_custom_text = true;
+                            $texts[$id_lang] = Tools::getValue($param.'_'.$id_lang);
+                        }
+                    }
+                    if ($has_custom_text) {
+                        $_POST[$param] = Tools::jsonEncode($texts);
+                    }
+                }
+                if ("KCOV3_EXTERNAL_PAYMENT_METHOD_DESC" == $param) {
+                    $texts = array();
+                    $has_custom_text = false;
+                    foreach (Language::getLanguages(false, false, true) as $id_lang) {
+                        if (Tools::getIsset($param.'_'.$id_lang)) {
+                            $has_custom_text = true;
+                            $texts[$id_lang] = Tools::getValue($param.'_'.$id_lang);
+                        }
+                    }
+                    if ($has_custom_text) {
+                        $_POST[$param] = Tools::jsonEncode($texts);
+                    }
+                }
+                
+                
                 if (Tools::getIsset($param)) {
-                     Configuration::updateValue($param, Tools::getValue($param));
-                     $isSaved = true;
+                    Configuration::updateValue($param, Tools::getValue($param));
+                    $isSaved = true;
                 }
             }
             if (1 === (int)Tools::getValue("KCOV3")) {
@@ -1566,7 +1606,6 @@ class KlarnaOfficial extends PaymentModule
                     'icon' => 'icon-AdminParentLocalization',
                   ),
                 'input' => array(
-                //KCOV3: FI
                     array(
                         'type' => 'switch',
                         'label' => $this->l('Active KCO V3'),
@@ -1658,7 +1697,155 @@ class KlarnaOfficial extends PaymentModule
                             'name' => 'label',
                         ),
                     ),
-
+                
+                array(
+                        'type' => 'switch',
+                        'label' => $this->l('Activate custom checkbox'),
+                        'name' => 'KCOV3_CUSTOM_CHECKBOX',
+                        'is_bool' => true,
+                        'values' => array(
+                            array(
+                                'id' => 'cc_on',
+                                'value' => 1,
+                                'label' => $this->l('Yes'), ),
+                            array(
+                                'id' => 'cc_off',
+                                'value' => 0,
+                                'label' => $this->l('No'), ),
+                        ),
+                        'desc' => $this->l('Activate custom checkbox.'),
+                    ),
+                    
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Custom checkbox prechecked'),
+                    'name' => 'KCOV3_CUSTOM_CHECKBOX_PRECHECKED',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'ccpc_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes'), ),
+                        array(
+                            'id' => 'ccpc_off',
+                            'value' => 0,
+                            'label' => $this->l('No'), ),
+                    ),
+                    'desc' => $this->l('the checkbox is prechecked.'),
+                ),
+                
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Custom checkbox required'),
+                    'name' => 'KCOV3_CUSTOM_CHECKBOX_REQUIRED',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'ccr_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes'), ),
+                        array(
+                            'id' => 'ccr_off',
+                            'value' => 0,
+                            'label' => $this->l('No'), ),
+                    ),
+                    'desc' => $this->l('the checkbox is required to be checked.'),
+                ),
+                    
+                array(
+                        'type' => 'text',
+                        'label' => $this->l('Custom Checkbox text'),
+                        'name' => 'KCOV3_CUSTOM_CHECKBOX_TEXT',
+                        'required' => false,
+                        'lang' => true,
+                    ),
+                    
+                    
+                array(
+                        'type' => 'switch',
+                        'label' => $this->l('Activate EPM'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_ACTIVE',
+                        'is_bool' => true,
+                        'values' => array(
+                            array(
+                                'id' => 'epm_on',
+                                'value' => 1,
+                                'label' => $this->l('Yes'), ),
+                            array(
+                                'id' => 'epm_off',
+                                'value' => 0,
+                                'label' => $this->l('No'), ),
+                        ),
+                        'desc' => $this->l('Activate EPM'),
+                    ),
+                array(
+                        'type' => 'select',
+                        'label' => $this->l('EPM label'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION',
+                        'desc' => $this->l('Choose the label text'),
+                        'options' => array(
+                            'query' => array(
+                            array(
+                                'value' => 0,
+                                'label' => $this->l('Nothing selected'), ),
+                            array(
+                                'value' => 'paypal',
+                                'label' => $this->l('Paypal'), ),
+                            array(
+                                'value' => 'swish',
+                                'label' => $this->l('Swish'), ),
+                        ),
+                            'id' => 'value',
+                            'name' => 'label',
+                        ),
+                    ),
+                array(
+                        'type' => 'text',
+                        'label' => $this->l('EPM image url'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_IMGURL',
+                        'required' => false,
+                        'desc' => $this->l('Requires https'),
+                    ),
+                array(
+                        'type' => 'text',
+                        'label' => $this->l('EPM Fee'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_FEE',
+                        'required' => false,
+                        'desc' => $this->l('Enter in minor units'),
+                    ),
+                array(
+                        'type' => 'text',
+                        'label' => $this->l('EPM limit countries'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_COUNTRIES',
+                        'required' => false,
+                        'desc' => $this->l('Enter ISO codes if you want to limit the option.'),
+                    ),
+                array(
+                        'type' => 'text',
+                        'label' => $this->l('EPM Description'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_DESC',
+                        'required' => false,
+                        'lang' => true,
+                    ),
+                array(
+                        'type' => 'select',
+                        'label' => $this->l('EPM label'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_LABEL',
+                        'desc' => $this->l('Choose the label text'),
+                        'options' => array(
+                            'query' => array(
+                            array(
+                                'value' => 0,
+                                'label' => $this->l('Continue'), ),
+                            array(
+                                'value' => 1,
+                                'label' => $this->l('Complete'), ),
+                        ),
+                            'id' => 'value',
+                            'name' => 'label',
+                        ),
+                    ),
+                    
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -2083,14 +2270,25 @@ class KlarnaOfficial extends PaymentModule
     {
         $returnarray = array();
         foreach ($this->configuration_params as $param) {
-            $returnarray[$param] = Tools::getValue($param, Configuration::get($param));
+            if ("KCOV3_CUSTOM_CHECKBOX_TEXT" == $param) {
+                $jsonstring = Configuration::get($param);
+                $dataarray = Tools::jsonDecode($jsonstring, true);
+                $returnarray[$param] = $dataarray;
+            } elseif ("KCOV3_EXTERNAL_PAYMENT_METHOD_DESC" == $param) {
+                $jsonstring = Configuration::get($param);
+                $dataarray = Tools::jsonDecode($jsonstring, true);
+                $returnarray[$param] = $dataarray;
+            } else {
+                $returnarray[$param] = Tools::getValue($param, Configuration::get($param));
+            }
         }
         return $returnarray;
     }
 
     public function hookDisplayProductAdditionalInfo($params)
     {
-        if (0 == (int) Configuration::get('KCO_SHOWPRODUCTPAGE') && 0 == (int) Configuration::get('KCOV3_SHOWPRODUCTPAGE')) {
+        if (0 == (int) Configuration::get('KCO_SHOWPRODUCTPAGE') &&
+        0 == (int) Configuration::get('KCOV3_SHOWPRODUCTPAGE')) {
             return;
         }
        
@@ -2321,6 +2519,10 @@ class KlarnaOfficial extends PaymentModule
             return;
         }
         
+        if (1 === (int) Configuration::get('KCO_SHOWPRODUCTPAGE')) {
+            $this->smarty->assign('kco_legacy_productpage', true);
+        }
+        
         $this->smarty->assign('klarna_footer_layout', Configuration::get('KCO_FOOTERLAYOUT'));
         $this->smarty->assign('klarnav3_footer_layout', 0);
         $this->smarty->assign('kco_footer_active', $kco_active);
@@ -2475,12 +2677,14 @@ class KlarnaOfficial extends PaymentModule
         if ($order->module != $this->name) {
             return;
         }
-
+        $sql = 'SELECT * FROM  `'._DB_PREFIX_.'klarna_checkbox` WHERE id_cart='.(int) $order->id_cart;
+        $klarna_checkbox_info = Db::getInstance()->getRow($sql);
         $sql = 'SELECT * FROM  `'._DB_PREFIX_.'klarna_orders` WHERE id_order='.(int) Tools::getValue('id_order');
         $klarna_orderinfo = Db::getInstance()->getRow($sql);
         $sql = 'SELECT error_message FROM `'._DB_PREFIX_.
         'klarna_errors` WHERE id_order='.(int) Tools::getValue('id_order');
         $klarna_errors = Db::getInstance()->executeS($sql);
+        $this->context->smarty->assign('klarna_checkbox_info', $klarna_checkbox_info);
         $this->context->smarty->assign('klarnacheckout_ssn', $klarna_orderinfo['ssn']);
         $this->context->smarty->assign('klarnacheckout_invoicenumber', $klarna_orderinfo['invoicenumber']);
         $this->context->smarty->assign('klarnacheckout_reservation', $klarna_orderinfo['reservation']);
@@ -2810,36 +3014,21 @@ class KlarnaOfficial extends PaymentModule
 
         if (Configuration::get('KCO_IS_ACTIVE')) {
             $KCO_SHOW_IN_PAYMENTS = Configuration::get('KCO_SHOW_IN_PAYMENTS');
-            if ($KCO_SHOW_IN_PAYMENTS) {
+            if ($KCO_SHOW_IN_PAYMENTS && 0 === (int) Configuration::get('KCOV3')) {
                 $address = new Address($this->context->cart->id_address_delivery);
                 $country = new Country($address->id_country);
                 if ($country->iso_code=="DE") {
                     $active_in_country = Configuration::get('KCO_GERMANY');
-                    if (false == $active_in_country) {
-                        $active_in_country = Configuration::get('KCOV3_GERMANY');
-                    }
                 } elseif ($country->iso_code=="NO") {
                     $active_in_country = Configuration::get('KCO_NORWAY');
-                    if (false == $active_in_country) {
-                        $active_in_country = Configuration::get('KCOV3_NORWAY');
-                    }
                 } elseif ($country->iso_code=="FI") {
                     $active_in_country = Configuration::get('KCO_FINLAND');
-                    if (false == $active_in_country) {
-                        $active_in_country = Configuration::get('KCOV3_FINLAND');
-                    }
                 } elseif ($country->iso_code=="SE") {
                     $active_in_country = Configuration::get('KCO_SWEDEN');
-                    if (false == $active_in_country) {
-                        $active_in_country = Configuration::get('KCOV3_SWEDEN');
-                    }
                 } elseif ($country->iso_code=="GB") {
                     $active_in_country = Configuration::get('KCO_UK');
                 } elseif ($country->iso_code=="AT") {
                     $active_in_country = Configuration::get('KCO_AUSTRIA');
-                    if (false == $active_in_country) {
-                        $active_in_country = Configuration::get('KCOV3_AUSTRIA');
-                    }
                 } else {
                     $active_in_country = false;
                 }
@@ -2883,9 +3072,17 @@ class KlarnaOfficial extends PaymentModule
                 $KPM_LOGO_ISO_CODE.'/basic/'.$KPM_LOGO.'.png?width=200" />';
             
             $newOption = new PaymentOption();
-            $newOption->setCallToActionText($this->l('Klarna Checkout'))
+            
+            if (1 === (int) Configuration::get('KCOV3')) {
+                $newOption->setCallToActionText($this->l('Klarna Checkout'))
+                ->setAction($this->context->link->getModuleLink($this->name, 'checkoutklarnakco', array(), true))
+                ->setAdditionalInformation($paymentAdditionalText);
+            } else {
+                $newOption->setCallToActionText($this->l('Klarna Checkout'))
                 ->setAction($this->context->link->getModuleLink($this->name, 'checkoutklarna', array(), true))
                 ->setAdditionalInformation($paymentAdditionalText);
+            }
+            
 
             $newOptions[] = $newOption;
         }
@@ -4016,8 +4213,15 @@ class KlarnaOfficial extends PaymentModule
         }
     }
     
-    public function createNewCustomer($given_name, $family_name, $email, $newsletter, $id_gender = 9, $date_of_birth = "", $cart = null)
-    {
+    public function createNewCustomer(
+        $given_name,
+        $family_name,
+        $email,
+        $newsletter,
+        $id_gender = 9,
+        $date_of_birth = "",
+        $cart = null
+    ) {
         $password = Tools::passwdGen(8);
         $customer = new Customer();
         $customer->firstname = $this->truncateValue($given_name, 32, true);
@@ -4078,10 +4282,10 @@ class KlarnaOfficial extends PaymentModule
                 $id_country = $this->context->country->id;
             }
             if ($id_country == 0) {
-                $id_country = (int)Configuration::get('PS_SHOP_COUNTRY_ID');
+                $id_country = (int)Configuration::get('PS_COUNTRY_DEFAULT');
             }
             if ($id_country == 0) {
-                $id_country = (int)Configuration::get('PS_COUNTRY_DEFAULT');
+                $id_country = (int)Configuration::get('PS_SHOP_COUNTRY_ID');
             }
 
             $country = new Country($id_country);

@@ -282,7 +282,7 @@ class KlarnaOfficialCheckoutKlarnaKcoModuleFrontController extends ModuleFrontCo
                         $checkout = new \Klarna\Rest\Checkout\Order($connector);
 
                         $totalCartValue = $this->context->cart->getOrderTotal(true, Cart::BOTH);
-                        $totalCartValue_tax_excl = $this->context->cart->getOrderTotal(false, Cart::BOTH);
+                        // $totalCartValue_tax_excl = $this->context->cart->getOrderTotal(false, Cart::BOTH);
                         // $total_tax_value = $totalCartValue - $totalCartValue_tax_excl;
                         $total_tax_value = 0;
                         
@@ -310,6 +310,38 @@ class KlarnaOfficialCheckoutKlarnaKcoModuleFrontController extends ModuleFrontCo
                         if (Configuration::get('KCO_FORCEPHONE')) {
                             $create['options']['phone_mandatory'] = true;
                         }
+                        if (Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_ACTIVE')) {
+                            
+                            if (1 == (int) Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_LABEL')) {
+                                $KCOV3_EXTERNAL_PAYMENT_METHOD_LABEL = 'continue';
+                            } else {
+                                $KCOV3_EXTERNAL_PAYMENT_METHOD_LABEL = 'complete';
+                            }
+                            
+                            if (Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_FEE') > 0) {
+                                $KCOV3_EXTERNAL_PAYMENT_METHOD_FEE = (int) Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_FEE');
+                            }
+                            
+                            $KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION_JSON = Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION');
+                            $KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION = Tools::jsonDecode($KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION_JSON);
+                            $KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION = $KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION[(int) $this->context->language->id];
+                            $original_checkout_url = '';
+                            $external_payment_method = array(
+                                'name' => Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION'),
+                                'redirect_url' => $original_checkout_url,
+                                'image_url' => Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_IMGURL'),
+                                'fee' => $KCOV3_EXTERNAL_PAYMENT_METHOD_FEE,
+                                'description' => $KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION,
+                                'label' => $KCOV3_EXTERNAL_PAYMENT_METHOD_LABEL,
+                            );
+                            
+                            if ("" != Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION')) {
+                                $external_payment_method["countries"] = Configuration::get('KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION');
+                            }
+                            $external_payment_methods[] = $external_payment_method;
+                            $create['external_payment_methods'] = $external_payment_methods;
+                        }
+                        
                         $create['gui']['layout'] = $layout;
                         $create['merchant_urls']['terms'] = $termsPage;
                         $create['merchant_urls']['cancellation_terms'] = $link_cancelation;
@@ -341,6 +373,22 @@ class KlarnaOfficialCheckoutKlarnaKcoModuleFrontController extends ModuleFrontCo
                             $create['options']['additional_checkbox']['checked'] = true;
                             $create['options']['additional_checkbox']['required'] = false;
                         }
+                        
+                        if (1 == (int)Configuration::get('KCOV3_CUSTOM_CHECKBOX')) {
+                            $json_encoded_string = Configuration::get('KCOV3_CUSTOM_CHECKBOX_TEXT');
+                            $text_array = Tools::jsonDecode($json_encoded_string, true);
+                            $custom_textbox_text = $text_array[(int) $this->context->language->id];
+                            $additional_checkbox = array (
+                                'id' => 'customcheckbox',
+                                'checked' => (bool) Configuration::get('KCOV3_CUSTOM_CHECKBOX_PRECHECKED'),
+                                'required' => (bool) Configuration::get('KCOV3_CUSTOM_CHECKBOX_REQUIRED'),
+                                'text' => $custom_textbox_text
+                            );
+                            $create['options']['additional_checkboxes'][] = $additional_checkbox;
+                        }
+                        
+                        
+                        
                         if (Configuration::get('KCO_COLORBUTTON') != '') {
                             $create['options']['color_button'] = ''.Configuration::get('KCO_COLORBUTTON');
                         }
@@ -448,6 +496,8 @@ class KlarnaOfficialCheckoutKlarnaKcoModuleFrontController extends ModuleFrontCo
                         // echo "<pre>";print_r($create);echo "</pre>";
                          
                         $this->assignSmartyVars($ssid, $country_information);
+                        
+                        Hook::exec('actionKlarnaBeforeSendData', array('create' => &$create));
                         
                         if (!isset($_SESSION['klarna_checkout_uk'])) {
                             $checkout->create($create);

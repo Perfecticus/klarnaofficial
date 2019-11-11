@@ -187,6 +187,8 @@ class KlarnaOfficialThankYouKcoModuleFrontController extends ModuleFrontControll
                         (int) $cart->id.", $id_shop, '', '', '','$reference');";
                     Db::getInstance()->execute($sql);
                     
+                    Hook::exec('actionKlarnaOrderDone', array('klarnadata' => $checkout));
+                    
                     $cache_id = 'objectmodel_cart_'.$cart->id.'_*';
                     Cache::clean($cache_id);
                     Cache::clean('getContextualValue*');
@@ -254,9 +256,34 @@ class KlarnaOfficialThankYouKcoModuleFrontController extends ModuleFrontControll
             }
             
             if (isset($result['id_order'])) {
+                $additional_checkboxes = array();
+                if (isset($checkout['options']) && isset($checkout['options']['additional_checkboxes'])) {
+                    foreach ($checkout['options']['additional_checkboxes'] as $additional_checkbox) {
+                        $additional_checkboxes[$additional_checkbox['id']] = $additional_checkbox['text'];
+                    }
+                }
+                if (isset($checkout['merchant_requested']) &&
+                isset($checkout['merchant_requested']['additional_checkboxes'])) {
+                    foreach ($checkout['merchant_requested']['additional_checkboxes'] as $additional_checkbox) {
+                        if (isset($additional_checkboxes[$additional_checkbox['id']])) {
+                            $text_at_time_of_purchase = pSQL($additional_checkboxes[$additional_checkbox['id']]);
+                        } else {
+                            $text_at_time_of_purchase = pSQL($additional_checkbox['id']);
+                        }
+                        $id_cart = (int) $cart->id;
+                        $checked = (int) $additional_checkbox['checked'];
+                        $sql = "INSERT INTO `"._DB_PREFIX_.
+                        "klarna_checkbox` (id_cart, text_at_time_of_purchase, checked)".
+                        " VALUES($id_cart, '$text_at_time_of_purchase', $checked);";
+                        Db::getInstance()->execute($sql);
+                    }
+                }
+                
                 $payment_type_allows_increase = '';
-                if (isset($checkout['payment_type_allows_increase']) && 1 === (int)$checkout['payment_type_allows_increase']) {
+                if (isset($checkout['payment_type_allows_increase']) &&
+                1 === (int)$checkout['payment_type_allows_increase']) {
                     $payment_type_allows_increase = '&ptai=1';
+                    $payment_type_allows_increase .= '&klarna_order_id='.Tools::getValue('klarna_order_id');
                 }
                 
                 //If order is created, we can redirect to normal thankyou page.
@@ -285,6 +312,8 @@ class KlarnaOfficialThankYouKcoModuleFrontController extends ModuleFrontControll
                     'cart' => $this->context->cart
                 ));
                 unset($_SESSION['klarna_checkout_uk']);
+                
+                Hook::exec('actionKlarnaOrderDone', array('klarnadata' => $checkout));
             }
         } catch (Exception $e) {
             echo $e->getTraceAsString();
