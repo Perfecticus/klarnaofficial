@@ -87,6 +87,7 @@ class KlarnaOfficial extends PaymentModule
         'KCOV3_EXTERNAL_PAYMENT_METHOD_LABEL',
         'KCOV3_EXTERNAL_PAYMENT_METHOD_DESC',
         'KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION',
+        'KCOV3_EXTERNAL_PAYMENT_METHOD_EXTERNALURL',
 
         'KCO_DOBMAN',
         'KCO_CALLBACK_CHECK',
@@ -167,7 +168,7 @@ class KlarnaOfficial extends PaymentModule
     {
         $this->name = 'klarnaofficial';
         $this->tab = 'payments_gateways';
-        $this->version = '2.1.17';
+        $this->version = '2.1.21';
         $this->author = 'Prestaworks AB';
         $this->need_instance = 1;
         $this->bootstrap = true;
@@ -1775,13 +1776,13 @@ class KlarnaOfficial extends PaymentModule
                                 'value' => 0,
                                 'label' => $this->l('No'), ),
                         ),
-                        'desc' => $this->l('Activate EPM'),
+                        'desc' => $this->l('Active External Payment Method (EPM)'),
                     ),
                 array(
                         'type' => 'select',
                         'label' => $this->l('EPM label'),
                         'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_OPTION',
-                        'desc' => $this->l('Choose the label text'),
+                        'desc' => $this->l('Choose from the drop down list of supported EPMs'),
                         'options' => array(
                             'query' => array(
                             array(
@@ -1881,27 +1882,35 @@ class KlarnaOfficial extends PaymentModule
                         'label' => $this->l('EPM image url'),
                         'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_IMGURL',
                         'required' => false,
-                        'desc' => $this->l('Requires https'),
+                        'desc' => $this->l('Requires URI with https. Logo is displayed in checkout footer and in the list of offered payment methods'),
                     ),
                 array(
                         'type' => 'text',
                         'label' => $this->l('EPM Fee'),
                         'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_FEE',
                         'required' => false,
-                        'desc' => $this->l('Enter in minor units'),
+                        'desc' => $this->l('Enter in minor units, fee to be displayed in the checkout'),
                     ),
                 array(
                         'type' => 'text',
                         'label' => $this->l('EPM limit countries'),
                         'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_COUNTRIES',
                         'required' => false,
-                        'desc' => $this->l('Enter ISO codes if you want to limit the option.'),
+                        'desc' => $this->l('Enter ISO codes separated by a comma (se,de) if you want to limit the option to specific countries.'),
+                    ),
+                array(
+                        'type' => 'text',
+                        'label' => $this->l('EPM external url'),
+                        'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_EXTERNALURL',
+                        'required' => false,
+                        'desc' => $this->l('Enter external redirect url. You as a merchant are responsible to implement the handling of the payments and order handling after redirect. If empty, redirected to Prestashop default checkout.'),
                     ),
                 array(
                         'type' => 'text',
                         'label' => $this->l('EPM Description'),
                         'name' => 'KCOV3_EXTERNAL_PAYMENT_METHOD_DESC',
                         'required' => false,
+                        'desc' => 'Custom description displayed when EPM selected (max 500 characters). Else default text displayed (i.e. for English: PayPal is provided by "Your business name")',
                         'lang' => true,
                     ),
                 array(
@@ -3373,8 +3382,10 @@ class KlarnaOfficial extends PaymentModule
     ) {
         $delivery_address_id = 0;
         $invoice_address_id = 0;
-        $shipping_iso = $country_iso_codes[$shipping['country']];
-        $invocie_iso = $country_iso_codes[$billing['country']];
+        // $shipping_iso = $country_iso_codes[$shipping['country']];
+        // $invocie_iso = $country_iso_codes[$billing['country']];
+        $shipping_iso = Tools::strtoupper($shipping['country']);
+        $invocie_iso = Tools::strtoupper($billing['country']);
         $shipping_country_id = Country::getByIso($shipping_iso);
         $invocie_country_id = Country::getByIso($invocie_iso);
 
