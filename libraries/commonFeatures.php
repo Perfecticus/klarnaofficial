@@ -5,11 +5,11 @@ class KlarnaCheckoutCommonFeatures
     public function BuildCartArray($cart, $shippingReference, $wrappingreference, $wrappingname, $discountname, $isv3 = false) {
         $totalCartValue = 0;
         $highest_tax_rate = 0;
-        
+
         foreach ($cart->getProducts() as $product) {
             $product_url = Context::getContext()->link->getProductLink($product['id_product'], $product['link_rewrite'], $product['category'], null, null, $product['id_shop'], $product['id_product_attribute'], false, false, true);
             $image_url = Context::getContext()->link->getImageLink($product['link_rewrite'], $product['id_image'], 'large_default');
-            
+
             $price = Tools::ps_round($product['price_wt'], 2);
             $tax_value = (Tools::ps_round($product['price_wt'], 2) - Tools::ps_round($product['price'], 2));
             $tax_value = Tools::ps_round($tax_value, 2);
@@ -18,11 +18,11 @@ class KlarnaCheckoutCommonFeatures
             $totalCartValue += $rowvalue;
 
             $tax_rate = (int) ($product['rate']) * 100;
-            
+
             if (0 == $tax_value) {
                 $tax_rate = 0;
             }
-            
+
             if ($isv3) {
                 $rate = (int) ($product['rate']);
                 if (0 == $rate) {
@@ -34,12 +34,11 @@ class KlarnaCheckoutCommonFeatures
                     $tax_value = Tools::ps_round($tax_value,2);
                 }
             }
-            
+
             if ($tax_rate > $highest_tax_rate) {
                 $highest_tax_rate = $tax_rate;
             }
-            
-            $price = ($price * 100);
+
             $checkoutcart[] = array(
                 'type' => 'physical',
                 'reference' => (isset($product['reference']) &&
@@ -52,7 +51,7 @@ class KlarnaCheckoutCommonFeatures
                 ),
                 'quantity' => (int) ($product['cart_quantity']),
                 'quantity_unit' => 'pcs',
-                'unit_price' => $price,
+                'unit_price' => (string) ($price * 100),
                 'product_url' => $product_url,
                 'image_url' => $image_url,
                 'tax_rate' => $tax_rate,
@@ -64,14 +63,14 @@ class KlarnaCheckoutCommonFeatures
         $shipping_cost_without_tax = $cart->getOrderTotal(false, Cart::ONLY_SHIPPING, null, $cart->id_carrier, false);
         $carrier = new Carrier($cart->id_carrier);
         $carrieraddress = new Address($cart->id_address_delivery);
-        
+
         if ($shipping_cost_without_tax > 0) {
             if (Configuration::get('PS_ATCP_SHIPWRAP')) {
                 $shipping_tax_rate = round(($shipping_cost_with_tax / $shipping_cost_without_tax) -1, 2) * 100;
             } else {
                 $shipping_tax_rate = $carrier->getTaxesRate($carrieraddress);
             }
-            
+
             if (($shipping_cost_with_tax != $shipping_cost_without_tax) && $shipping_tax_rate == 0) {
                 //Prestashop error due to EU module?
                 $shipping_tax_rate = round(($shipping_cost_with_tax / $shipping_cost_without_tax) -1, 2) * 100;
@@ -80,13 +79,13 @@ class KlarnaCheckoutCommonFeatures
             $shipping_tax_value = $shipping_cost_with_tax - ($shipping_cost_with_tax / (1+($shipping_tax_rate/100)));
             $shipping_tax_value = Tools::ps_round($shipping_tax_value, 2);
             $totalCartValue += $shipping_cost_with_tax;
-            
+
             $shipping_tax_rate = (int) ($shipping_tax_rate * 100);
-            
+
             if ($shipping_tax_rate > $highest_tax_rate) {
                 $highest_tax_rate = $shipping_tax_rate;
             }
-            
+
             $checkoutcart[] = array(
                 'type' => 'shipping_fee',
                 'reference' => $shippingReference,
@@ -105,15 +104,15 @@ class KlarnaCheckoutCommonFeatures
                 $wrapping_cost_incl = $cart->getOrderTotal(true, Cart::ONLY_WRAPPING);
                 $wrapping_vat = (($wrapping_cost_incl / $wrapping_cost_excl) - 1) * 100;
                 $wrapping_tax_value = ($wrapping_cost_incl - $wrapping_cost_excl);
-                
+
                 $cart_wrapping = Tools::ps_round($cart_wrapping, 2);
                 $totalCartValue += $cart_wrapping;
-                
+
                 $wrapping_vat = (int) ($wrapping_vat * 100);
                 if ($wrapping_vat > $highest_tax_rate) {
                     $highest_tax_rate = $wrapping_vat;
                 }
-                
+
                 $checkoutcart[] = array(
                     'reference' => $wrappingreference,
                     'name' => $wrappingname,
@@ -141,7 +140,7 @@ class KlarnaCheckoutCommonFeatures
                 } else {
                     $tax_value = 0;
                 }
-                
+
                 if ($highest_tax_rate == 0) {
                     $tax_value = 0;
                     $common_tax_rate = 0;
@@ -156,7 +155,7 @@ class KlarnaCheckoutCommonFeatures
                         'tax_rate' => (int) ($common_tax_rate * 100),
                         'total_amount' => (string) (-($value_real * 100)),
                         'total_tax_amount' => (string) (-($tax_value * 100)),
-                    );                    
+                    );
                 }
             }
         } else {
@@ -205,7 +204,7 @@ class KlarnaCheckoutCommonFeatures
             // $total_cart_price_after_round = round($total_cart_price_before_round);
             // $round_diff = $total_cart_price_after_round - $total_cart_price_before_round;
         // }
-        
+
         // if ($round_diff != 0) {
             // $checkoutcart[] = array(
                 // 'reference' => '',
@@ -218,25 +217,25 @@ class KlarnaCheckoutCommonFeatures
                 // 'total_tax_amount' => 0,
             // );
         // }
-        
+
         return $checkoutcart;
     }
-    
-    
+
+
     public function getConnector($ssid, $eid, $sharedSecret, $kcoTestMode, $version)
     {
-        
+
         $userAgent = \Klarna\Rest\Transport\UserAgent::createDefault();
         $userAgent->setField('prestashop', 'version', _PS_VERSION_);
         $userAgent->setField('klarnaofficial', 'version', $version);
-        
+
         if ($kcoTestMode == 1) {
             if ($ssid=='us') {
                 $url = 'https://api-na.playground.klarna.com/';
             } else {
                 $url = \Klarna\Rest\Transport\ConnectorInterface::EU_TEST_BASE_URL;
             }
-            
+
             $connector = \Klarna\Rest\Transport\Connector::create(
                 $eid,
                 $sharedSecret,
