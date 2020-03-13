@@ -168,8 +168,8 @@ class KlarnaOfficialCheckoutKlarnaKcoModuleFrontController extends ModuleFrontCo
                     }
                     $shipping_option["name"] = $carrierobject->name;
                     $shipping_option["description"] = $carrierobject->delay[(int)$this->context->cart->id_lang];
-                    $shipping_option["price"] = $option["total_price_with_tax"] * 100;
-                    $taxamount = (($option["total_price_with_tax"] - $option["total_price_without_tax"]) * 100);
+                    $shipping_option["price"] = (string) ($option["total_price_with_tax"] * 100);
+                    $taxamount = (string) (($option["total_price_with_tax"] - $option["total_price_without_tax"]) * 100);
                     $shipping_option["tax_amount"] = $taxamount;
                     $shipping_tax_rate = $carrierobject->getTaxesRate($carrieraddress);
                     $shipping_option["tax_rate"] = $shipping_tax_rate*100;
