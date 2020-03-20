@@ -297,34 +297,47 @@ if ($country_information['purchase_country'] == 'SE') {
         Tools::redirect($kcov3link);
     }
    
-} elseif ($country_information['purchase_country'] == 'US') {
-    $eid = Configuration::get('KCO_US_EID');
-    $sharedSecret = Configuration::get('KCO_US_SECRET');
-    $ssid = 'us';
-    if ($country->iso_code != 'US' && $skipCountryCheck === false) {
-        if ($this->context->cart->id_address_delivery==Configuration::get('KCO_US_ADDR')) {
+} else {
+    if (Configuration::get('KCOV3')) {
+        $eid = Configuration::get('KCOV3_EID');
+        $sharedSecret = Configuration::get('KCOV3_SECRET');
+    } else {
+        $eid = (int) (Configuration::get('KCO_SWEDEN_EID'));
+        $sharedSecret = Configuration::get('KCO_SWEDEN_SECRET');
+    }
+    $ssid = 'se';
+    if ($country->iso_code != 'SE' && $skipCountryCheck === false) {
+        if ($this->context->cart->id_address_delivery==Configuration::get('KCO_SWEDEN_ADDR')) {
             $this->module->createAddress(
-                'US',
-                'KCO_US_ADDR',
-                'Washington',
-                'United State',
-                'KCO_US_DEFAULT'
-            );
+                'SE',
+                'KCO_SWEDEN_ADDR',
+                'Stockholm',
+                'Sverige',
+                'KCO_SVERIGE_DEFAULT'
+                );
         }
         
-        $this->context->cart->id_address_delivery = Configuration::get('KCO_US_ADDR');
-        $this->context->cart->id_address_invoice = (int) Configuration::get('KCO_US_ADDR');
+        $this->context->cart->id_address_delivery = (int) Configuration::get('KCO_SWEDEN_ADDR');
+        $this->context->cart->id_address_invoice = (int) Configuration::get('KCO_SWEDEN_ADDR');
         $this->context->cart->update();
         $update_sql = 'UPDATE '._DB_PREFIX_.'cart_product '.
-                    'SET id_address_delivery='.(int) Configuration::get('KCO_US_ADDR').
-                    ' WHERE id_cart='.(int) $this->context->cart->id;
+            'SET id_address_delivery='.(int) Configuration::get('KCO_SWEDEN_ADDR').
+            ' WHERE id_cart='.(int) $this->context->cart->id;
         Db::getInstance()->execute($update_sql);
-        Tools::redirect('index.php?fc=module&module=klarnaofficial&controller=checkoutklarnaus');
+        if (Configuration::get('KCOV3')) {
+            Tools::redirect($kcov3link);
+        } else {
+            Tools::redirect($kcolink);
+        }
     }
+    
     if ((bool)Configuration::get('KCOV3')==false) {
-        $this->module->changeCurrencyonCart($currency, "USD");
+        $this->module->changeCurrencyonCart($currency, "SEK");
     }
-    if ($this->current_kco != 'US') {
-        Tools::redirect('index.php?fc=module&module=klarnaofficial&controller=checkoutklarnaus');
+    
+    if ((bool)Configuration::get('KCOV3')) {
+        Tools::redirect($kcov3link);
+    } else {
+        Tools::redirect($kcolink);
     }
 }
