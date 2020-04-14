@@ -142,8 +142,7 @@ class KlarnaOfficial extends PaymentModule
         $this->name = 'klarnaofficial';
         $this->tab = 'payments_gateways';
         $this->version = '2.2.9';
-        $this->author = 'Prestaworks AB';
-        $this->module_key = 'b803c9b20c1ec71722eab517259b8ddf';
+        $this->author = 'Prestaworks AB & Applitron Datasystem AB';
         $this->need_instance = 1;
         $this->bootstrap = true;
         $this->currencies = true;
@@ -1796,7 +1795,14 @@ class KlarnaOfficial extends PaymentModule
                             $KlarnaCheckoutCommonFeatures = new KlarnaCheckoutCommonFeatures();
                             $kcoorder = $KlarnaCheckoutCommonFeatures->getFromKlarna($eid, $shared_secret, $headers, '/ordermanagement/v1/orders/'.$reservation_number);
                             $kcoorder = json_decode($kcoorder, true);
-                            
+
+                            if (Configuration::get('KCO_ORDERID') == 1 && $kcoorder['merchant_reference1'] != $order->reference) {
+                                $data = array(
+                                    'merchant_reference1' => $order->reference
+                                );
+                                $KlarnaCheckoutCommonFeatures->postToKlarna($data, $eid, $shared_secret, $headers, '/ordermanagement/v1/orders/'.$reservation_number.'/merchant-references', true);
+                            }
+
                             if ($invoice_number != '') {
                                 $data = array(
                                     'refunded_amount' => $kcoorder['order_amount'],
@@ -1849,7 +1855,14 @@ class KlarnaOfficial extends PaymentModule
                             $kcoorder = $KlarnaCheckoutCommonFeatures->getFromKlarna($eid, $shared_secret, $headers, '/ordermanagement/v1/orders/'.$reservation_number);
                             $kcoorder = json_decode($kcoorder, true);
                             $risk_status = pSQL($kcoorder['fraud_status']);
-                            
+
+                            if (Configuration::get('KCO_ORDERID') == 1 && $kcoorder['merchant_reference1'] != $order->reference) {
+                                $data = array(
+                                    'merchant_reference1' => $order->reference
+                                );
+                                $KlarnaCheckoutCommonFeatures->postToKlarna($data, $eid, $shared_secret, $headers, '/ordermanagement/v1/orders/'.$reservation_number.'/merchant-references', true);
+                            }
+
                             $data = array(
                                 'captured_amount' => $kcoorder['order_amount'],
                                 'description' => 'Shipped all of the order',
@@ -2898,19 +2911,13 @@ class KlarnaOfficial extends PaymentModule
         }
         
         $language_code = $this->context->language->language_code;
-        
-        if ($this->context->cart->id_address_delivery > 0) {
-            $temporary_address_object = new Address((int) $this->context->cart->id_address_delivery);
-            if ($temporary_address_object->id_customer > 0 &&
-            $this->context->customer->id > 0 &&
-            $this->context->customer->id == $temporary_address_object->id_customer
-            ) {
-                $id_shop_country = $temporary_address_object->id_country;
-            }
-        }
-        
-        if (isset($this->context->country)) {
-            $id_shop_country = (int)$this->context->country->id;
+
+        $id_shop_country = 0;
+        if($this->context->cart->id_address_delivery) {
+            $carrieraddress = new Address($this->context->cart->id_address_delivery);
+            $id_shop_country = (int)$carrieraddress->id_country;
+        } elseif (isset($this->context->country)) {
+            $id_shop_country = $this->context->country->id;
         }
         if ($id_shop_country == 0) {
             $id_shop_country = (int)Configuration::get('PS_COUNTRY_DEFAULT');
