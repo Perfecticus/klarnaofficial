@@ -3260,7 +3260,7 @@ class KlarnaOfficial extends PaymentModule
                                 );
                                 $kcoorder->fetch();
 
-                                if (Configuration::get('KCO_ORDERID') == 1 && $kcoorder['merchant_reference1'] != $order->reference) {
+                                if (Configuration::get('KCO_ORDERID') == 1 && (! isset($kcoorder['merchant_reference1']) || $kcoorder['merchant_reference1'] != $order->reference)) {
                                     $kcoorder->updateMerchantReferences(array(
                                         'merchant_reference1' => '' . $order->reference
                                     ));
@@ -3283,7 +3283,7 @@ class KlarnaOfficial extends PaymentModule
                                     $reservation_number
                                 );
 
-                                if (Configuration::get('KCO_ORDERID') == 1 && $kcoorder['merchant_reference1'] != $order->reference) {
+                                if (Configuration::get('KCO_ORDERID') == 1 && (! isset($kcoorder['merchant_reference1']) || $kcoorder['merchant_reference1'] != $order->reference)) {
                                     $kcoorder->updateMerchantReferences(array(
                                         'merchant_reference1' => '' . $order->reference
                                     ));
@@ -3364,8 +3364,7 @@ class KlarnaOfficial extends PaymentModule
                             );
                             $kcoorder->fetch();
 
-                            if (Configuration::get('KCO_ORDERID') == 1
-                                && $kcoorder['merchant_reference1'] != $order->reference) {
+                            if (Configuration::get('KCO_ORDERID') == 1 && (! isset($kcoorder['merchant_reference1']) || $kcoorder['merchant_reference1'] != $order->reference)) {
                                 $kcoorder->updateMerchantReferences(array(
                                     'merchant_reference1' => '' . $order->reference
                                 ));
