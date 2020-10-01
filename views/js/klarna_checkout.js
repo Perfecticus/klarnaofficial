@@ -22,7 +22,7 @@ $(document).ready(function()
       'updateCart',
       function (event) {
           if (event.reason != "KCOorderChange") {
-            
+
             if(isv3) {
                 updateKCOV3();
             } else {
@@ -34,7 +34,7 @@ $(document).ready(function()
     );
 });
 
-$(document).ready(function(){ 
+$(document).ready(function(){
     if(isv3) {
         window._klarnaCheckout(function(api) {
           api.on({
@@ -79,9 +79,13 @@ function updateKCOV3()
 		data: 'kco_update=1',
 		success: function(jsonData)
 		{
-			window._klarnaCheckout(function (api) {
-              api.resume();
-            });
+			if(jsonData) {
+				window._klarnaCheckout(function (api) {
+	              api.resume();
+	            });
+	        } else {
+	            window.location.href = prestashop.urls.base_url;
+	        }
 		},
 		error: function(XMLHttpRequest, textStatus, errorThrown) {
 			alert(jsonData);
