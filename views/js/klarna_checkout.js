@@ -34,6 +34,7 @@ $(document).ready(function(){
           api.on({
             'order_total_change': function(data) {
                 prestashop.emit('updateCart', {reason: 'KCOorderChange'});
+		        updateKCOV3();
             }
           });
         });
@@ -68,8 +69,8 @@ function updateKCOV3()
 		data: 'kco_update=1',
 		success: function(jsonData)
 		{
-            if ('error' == jsonData) {
-                location.href = kcocarturl;
+            if (!jsonData || 'error' == jsonData) {
+                location.href = prestashop.urls.base_url;
             }
 			window._klarnaCheckout(function (api) {
               api.resume();
