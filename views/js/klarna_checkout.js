@@ -22,7 +22,6 @@ $(document).ready(function()
       'updateCart',
       function (event) {
           if (event.reason != "KCOorderChange") {
-
             if(isv3) {
                 updateKCOV3();
             } else {
@@ -40,6 +39,12 @@ $(document).ready(function(){
           api.on({
             'order_total_change': function(data) {
                 prestashop.emit('updateCart', {reason: 'KCOorderChange'});
+                if(isv3) {
+		            updateKCOV3();
+		        } else {
+		            showLoaderImg();
+		            updateKCOV2();
+		        }
             }
           });
         });
