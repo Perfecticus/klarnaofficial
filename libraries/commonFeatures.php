@@ -145,6 +145,16 @@ class KlarnaCheckoutCommonFeatures
                     $tax_value = 0;
                     $common_tax_rate = 0;
                 }
+
+                if (Module::isEnabled('psgiftcards')
+                        && Db::getInstance()->executeS('SELECT id_giftcard FROM ' . _DB_PREFIX_ . 'psgiftcards_history WHERE id_cartRule= ' . $rule["id_cart_rule"])) {
+                    $tax_value = 0;
+                    $common_tax_rate = 0;
+                    error_log('a gift card');
+                } else {
+                    error_log('not a gift card');
+                }
+
                 if ($value_real > 0) {
                     $checkoutcart[] = array(
                         'type' => 'discount',
