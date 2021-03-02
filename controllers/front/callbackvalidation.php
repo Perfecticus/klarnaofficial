@@ -85,7 +85,7 @@ class KlarnaOfficialCallbackValidationModuleFrontController extends ModuleFrontC
                     foreach ($klarnaorder["cart"]["items"] as $klarnakey => $itemInKlarna) {
                         foreach ($checkoutcart as $pskey => $itemInPrestashop) {
                             if ($itemInKlarna["type"] == $itemInPrestashop["type"] &&
-                                $itemInKlarna["name"] == $itemInPrestashop["name"] &&
+                                $itemInKlarna["reference"] == $itemInPrestashop["reference"] &&
                                 $itemInKlarna["quantity"] == $itemInPrestashop["quantity"]
                             ) {
                                 unset($klarnaorder["cart"]["items"][$klarnakey]);
@@ -95,6 +95,12 @@ class KlarnaOfficialCallbackValidationModuleFrontController extends ModuleFrontC
                     }
                     
                     if (is_array($klarnaorder["cart"]["items"]) && count($klarnaorder["cart"]["items"]) > 0) {
+                        foreach ($klarnaorder["cart"]["items"] as $klarnakey => $itemInKlarna) {
+                            error_log('klarna' . $klarnakey . ' = ' . print_r($itemInKlarna, true));
+                        }
+                        foreach ($checkoutcart as $pskey => $itemInPrestashop) {
+                            error_log('ps' . $pskey . ' = ' . print_r($itemInPrestashop, true));
+                        }
                         $this->redirectKCO();
                     }
                     if (is_array($checkoutcart) && count($checkoutcart) > 0) {
@@ -134,9 +140,27 @@ class KlarnaOfficialCallbackValidationModuleFrontController extends ModuleFrontC
                 );
             }
         }
-        
+
+        foreach($this->generateCallTrace() as $trace)
+            error_log($trace);
+
         Tools::redirect($url);
         exit;
+    }
+    
+    public function generateCallTrace()
+    {
+        $e = new Exception();
+        $trace = explode("\n", $e->getTraceAsString());
+        // reverse array to make steps line up chronologically
+        $trace = array_reverse($trace);
+        array_shift($trace); // remove {main}
+        array_pop($trace); // remove call to this method
+        $length = count($trace);
+        $result = array();
+        for ($i = 0; $i < $length; $i++)
+            $result[] = ($i + 1)  . ')' . substr($trace[$i], strpos($trace[$i], ' ')); // replace '#someNum' with '$i)', set the right ordering
+        return $result;
     }
     
     protected function displayMaintenancePage()
